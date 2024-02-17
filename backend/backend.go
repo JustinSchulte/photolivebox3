@@ -52,8 +52,8 @@ func UploadImage(c echo.Context) error {
 	defer src.Close()
 
 	// Destination
-	timestamp := strings.ReplaceAll(time.Now().Format(time.RFC3339), ":", "-")
-	filename := fmt.Sprintf("%v_%v", timestamp, file.Filename)
+	timestamp := time.Now().Format(time.RFC3339)
+	filename := strings.ReplaceAll(fmt.Sprintf("%v_%v", timestamp, file.Filename), ":", "-")
 	fullFilepath := filepath.Join(imagePath, filename)
 	dst, err := os.Create(fullFilepath)
 	if err != nil {
