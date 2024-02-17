@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -15,8 +17,10 @@ type ImageResponse struct {
 	NewLastDate string   `json:"newLastDate"`
 }
 
+var imagePath = filepath.Join("backend", "images")
+
 func ListImages(c echo.Context) error {
-	images, err := os.ReadDir("./backend/images")
+	images, err := os.ReadDir(imagePath)
 	if err != nil {
 		fmt.Printf("cant read images: %v\n", err)
 	}
@@ -29,7 +33,7 @@ func ListImages(c echo.Context) error {
 
 func GetImage(c echo.Context) error {
 	filename := c.Param("filename")
-	filepath := fmt.Sprintf("./backend/images/%v", filename)
+	filepath := filepath.Join(imagePath, filename)
 	return c.File(filepath)
 }
 
@@ -48,9 +52,10 @@ func UploadImage(c echo.Context) error {
 	defer src.Close()
 
 	// Destination
-	timestamp := time.Now().Format(time.RFC3339)
-	filename := fmt.Sprintf("./backend/images/%v_%v", timestamp, file.Filename)
-	dst, err := os.Create(filename)
+	timestamp := strings.ReplaceAll(time.Now().Format(time.RFC3339), ":", "-")
+	filename := fmt.Sprintf("%v_%v", timestamp, file.Filename)
+	fullFilepath := filepath.Join(imagePath, filename)
+	dst, err := os.Create(fullFilepath)
 	if err != nil {
 		fmt.Printf("Error create new file: %v\n", err)
 		return err
