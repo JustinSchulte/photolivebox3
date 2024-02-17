@@ -76,6 +76,7 @@ import heic2any from "heic2any";
 const state = ref("upload");
 const isLoading = ref(false);
 const myFile = ref();
+const filename = ref("");
 const imageSrc = ref("");
 const snackbar = ref(false);
 const snackbarMsg = ref("");
@@ -92,6 +93,7 @@ const showSelectedFile = async () => {
   isLoading.value = true;
   // get image as and convert to blob
   let file = myFile.value[0];
+  filename.value = file.name;
   let blobURL = URL.createObjectURL(file);
   let blobRes = await fetch(blobURL);
   let blob = await blobRes.blob();
@@ -100,6 +102,7 @@ const showSelectedFile = async () => {
     if (window && typeof window !== "undefined") {
       blob = (await heic2any({ blob })) as Blob;
     }
+    filename.value = `${filename.value.replace(/\.[^/.]+$/, "")}.png`;
   }
   // set image view src
   const base64File = await blobToBase64(blob);
@@ -114,7 +117,7 @@ const uploadFile = async () => {
   const base64File = imageSrc.value;
   const res: Response = await fetch(base64File);
   const blob: Blob = await res.blob();
-  const file = new File([blob], "example.png", { type: "image/png" });
+  const file = new File([blob], filename.value, { type: "image/png" });
   // create and send http request to upload the photo
   const formData = new FormData();
   formData.append("file", file);
