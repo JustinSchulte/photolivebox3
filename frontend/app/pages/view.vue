@@ -12,13 +12,14 @@
 let activeImage = 0;
 const image = ref<string>();
 let imageList: string[] = [];
-const imageTime = 1000;
-const refreshTime = 5000;
+const imageTime = 5 * 1000; // show an image 5s
+const refreshTime = 30 * 1000; // update list every 30s
 
 onMounted(async () => {
   // get all images and show the first one
   await listImages();
   await getImage(imageList[0]);
+  // TODO may save imageNumber to local Storage and load when browser refresh is needed
   // get list of images every few seconds -> there may are any new ones
   setInterval(() => {
     listImages();
@@ -70,7 +71,10 @@ const blobToBase64 = async (blob: Blob) => {
 };
 </script>
 
-<style scoped>
+<style>
+html {
+  overflow-y: auto !important;
+}
 .view {
   height: calc(100vh - 24px);
 }
