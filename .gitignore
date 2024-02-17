@@ -27,6 +27,3 @@ dist
 
 # vscode
 .vscode/
-
-# images
-backend/images
