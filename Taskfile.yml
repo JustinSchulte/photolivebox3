@@ -1,0 +1,33 @@
+version: "3"
+tasks:
+  setup:
+    desc: setup project
+    cmds:
+      - task: init
+      - task: generate
+      - task: tidy
+      - task: go
+  init:
+    desc: initialize the frontend
+    dir: frontend/app
+    cmds:
+      - yarn install
+  generate:
+    desc: generate the frontend
+    dir: frontend/app
+    cmds:
+      - yarn generate
+  tidy:
+    desc: run go mod tidy and vendor
+    cmds:
+      - go mod tidy
+      - go mod vendor
+  start:
+    desc: generate frontend and run the app
+    cmds:
+      - task: generate
+      - go run main.go
+  go:
+    desc: run app (without frontend rebuild)
+    cmds:
+      - go run main.go

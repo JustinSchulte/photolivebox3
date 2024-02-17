@@ -13,6 +13,7 @@ node_modules/
 
 # nuxt.js build output
 .nuxt
+.output
 
 # Nuxt generate
 dist
@@ -26,3 +27,6 @@ dist
 
 # vscode
 .vscode/
+
+# images
+backend/images
