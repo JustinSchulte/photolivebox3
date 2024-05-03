@@ -2,28 +2,62 @@
   <v-container class="pa-0 ma-0 fill-height" fluid>
     <v-row>
       <v-col>
-        <v-img :src="image" class="view"></v-img>
+        <video
+          v-if="videoUrl"
+          :src="videoUrl"
+          autoplay
+          controls
+          muted
+          class="view"
+        ></video>
+        <v-img v-else :src="image" class="view"></v-img>
       </v-col>
     </v-row>
+    <div
+      class="position-absolute rounded-lg px-4 py-2 ma-1 font-weight-black"
+      :style="{ background: '#fc5203', top: 0, right: 0 }"
+    >
+      {{ isNewImage ? "NEUES FOTO" : currentImageCounter }}
+    </div>
   </v-container>
 </template>
 
 <script setup lang="ts">
-let activeImage = 0;
+const videoUrl = ref("");
+const activeImage = ref(0);
 const image = ref<string>();
-let imageList: string[] = [];
+const isNewImage = ref<boolean>();
+const imageList = ref<string[]>([]);
+const imageListBrandNew = ref<string[]>([]);
 const imageTime = 5 * 1000; // show an image 5s
-const refreshTime = 30 * 1000; // update list every 30s
+const newImageTime = 10 * 1000; // show new images 10s
+const refreshTime = 3 * 1000; // update list every 3s
 
 onMounted(async () => {
   // get all images and show the first one
   await listImages();
-  await getImage(imageList[0]);
-  // TODO may save imageNumber to local Storage and load when browser refresh is needed
+
+  // check if there is any saved number at local storage
+  const counterString = localStorage.getItem("counter");
+  if (counterString) {
+    // start at saved position
+    const counter = parseInt(counterString);
+    activeImage.value = counter;
+    await getImage(imageList.value[counter], false);
+  } else {
+    // start at 0
+    await getImage(undefined, false);
+  }
+
   // get list of images every few seconds -> there may are any new ones
   setInterval(() => {
     listImages();
   }, refreshTime);
+});
+
+const currentImageCounter = computed(() => {
+  if (!imageList.value.length) return "0/0";
+  return `${activeImage.value + 1}/${imageList.value.length}`;
 });
 
 const listImages = async () => {
@@ -35,13 +69,37 @@ const listImages = async () => {
     console.error(err);
     return null;
   });
-  if (newImageList !== null && newImageList.length !== imageList.length) {
+  if (newImageList !== null && newImageList.length !== imageList.value.length) {
     // we got images and the length changed -> update
-    imageList = newImageList;
+    if (imageList.value.length) {
+      // we got a list before -> so there are new images
+      imageListBrandNew.value.push(
+        ...newImageList.filter((item) => !imageList.value.includes(item))
+      );
+    }
+    imageList.value = newImageList;
   }
 };
 
-const getImage = async (imageName: string) => {
+const getImage = async (imageName: string | undefined, isNew: boolean) => {
+  isNewImage.value = isNew;
+
+  // check if an image exists
+  if (!imageName) {
+    // try to get new one
+    imageName = imageListBrandNew.value.shift();
+    if (imageName) {
+      isNewImage.value = true;
+    } else if (imageList.value.length) {
+      // get first one
+      imageName = imageList.value[0];
+    } else {
+      // probably no image exist right now -> try it again later
+      setTimeout(() => getImage(undefined, false), imageTime);
+      return;
+    }
+  }
+
   // fetch image
   const blob = await $fetch<Blob>(`/getImage/${imageName}`, {
     baseURL: "/api/v1",
@@ -51,15 +109,33 @@ const getImage = async (imageName: string) => {
     return null;
   });
   if (blob) {
-    const base64File = await blobToBase64(blob);
-    image.value = base64File;
+    if (blob.type.startsWith("video")) {
+      videoUrl.value = URL.createObjectURL(blob);
+    } else {
+      videoUrl.value = "";
+      const base64File = await blobToBase64(blob);
+      image.value = base64File;
+    }
   }
-  // prepare next image
-  activeImage++;
-  if (activeImage >= imageList.length) {
-    activeImage = 0;
-  }
-  setTimeout(() => getImage(imageList[activeImage]), imageTime);
+
+  setTimeout(
+    () => {
+      const newImage = imageListBrandNew.value.shift();
+      if (newImage) {
+        // get new added image
+        getImage(newImage, true);
+      } else {
+        // prepare next regular image
+        activeImage.value++;
+        if (activeImage.value >= imageList.value.length) {
+          activeImage.value = 0;
+        }
+        localStorage.setItem("counter", activeImage.value.toString());
+        getImage(imageList.value[activeImage.value], false);
+      }
+    },
+    isNewImage.value ? newImageTime : imageTime
+  );
 };
 
 const blobToBase64 = async (blob: Blob) => {
@@ -76,6 +152,7 @@ html {
   overflow-y: auto !important;
 }
 .view {
-  height: calc(100vh - 24px);
+  min-width: 100%;
+  height: calc(100vh - 32px);
 }
 </style>

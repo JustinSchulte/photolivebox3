@@ -26,6 +26,10 @@ func ListImages(c echo.Context) error {
 	}
 	imageList := []string{}
 	for _, img := range images {
+		extension := filepath.Ext(img.Name())
+		if extension == ".gitkeep" || extension == ".DS_Store" {
+			continue
+		}
 		imageList = append(imageList, img.Name())
 	}
 	return c.JSON(http.StatusOK, imageList)
