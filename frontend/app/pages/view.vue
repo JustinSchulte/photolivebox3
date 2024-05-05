@@ -14,11 +14,17 @@
       </v-col>
     </v-row>
     <div
+      class="position-absolute ma-1 font-weight-black text-white"
+      :style="{ top: 0, right: 0, fontSize: '10px' }"
+    >
+      {{ isNewImage ? "NEUES FOTO" : currentImageCounter }}
+    </div>
+    <!-- <div
       class="position-absolute rounded-lg px-4 py-2 ma-1 font-weight-black"
       :style="{ background: '#fc5203', top: 0, right: 0 }"
     >
       {{ isNewImage ? "NEUES FOTO" : currentImageCounter }}
-    </div>
+    </div> -->
   </v-container>
 </template>
 
@@ -56,8 +62,8 @@ onMounted(async () => {
 });
 
 const currentImageCounter = computed(() => {
-  if (!imageList.value.length) return "0/0";
-  return `${activeImage.value + 1}/${imageList.value.length}`;
+  if (!imageList.value.length) return "0 / 0";
+  return `${activeImage.value + 1} / ${imageList.value.length}`;
 });
 
 const listImages = async () => {

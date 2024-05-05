@@ -18,6 +18,7 @@ type ImageResponse struct {
 }
 
 var imagePath = filepath.Join("backend", "images")
+var videoPath = filepath.Join("backend", "videos")
 
 func ListImages(c echo.Context) error {
 	images, err := os.ReadDir(imagePath)
@@ -55,10 +56,17 @@ func UploadImage(c echo.Context) error {
 	}
 	defer src.Close()
 
+	// Choose folder by type
+	destFolder := imagePath
+	fileType := c.FormValue("type")
+	if fileType == "video" {
+		destFolder = videoPath
+	}
+
 	// Destination
 	timestamp := time.Now().Format(time.RFC3339)
 	filename := strings.ReplaceAll(fmt.Sprintf("%v_%v", timestamp, file.Filename), ":", "-")
-	fullFilepath := filepath.Join(imagePath, filename)
+	fullFilepath := filepath.Join(destFolder, filename)
 	dst, err := os.Create(fullFilepath)
 	if err != nil {
 		fmt.Printf("Error create new file: %v\n", err)
